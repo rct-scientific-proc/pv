@@ -237,8 +237,7 @@ int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
 
     /* Initialize output to NaN so unfilled pixels are obvious during cleanup. */
     {
-        const double NaN = 0.0 / 0.0;
-        for (size_t i = 0; i < N; ++i) unwrapped_phase[i] = NaN;
+        for (size_t i = 0; i < N; ++i) unwrapped_phase[i] = NAN;
     }
 
     int32_t qhead = 0, qtail = 0;
