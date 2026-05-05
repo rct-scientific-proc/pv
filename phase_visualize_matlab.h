@@ -19,6 +19,9 @@ extern "C" {
 int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
                            int32_t rows, int32_t cols);
 
+int phase_unwrap_goldstein_ex(const double *wrapped_phase, double *unwrapped_phase,
+                              int32_t rows, int32_t cols, int32_t max_box);
+
 int phase_sincos_decompose(const double *phase, double *cos_out, double *sin_out,
                            int32_t numel);
 

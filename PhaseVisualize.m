@@ -75,16 +75,26 @@ classdef PhaseVisualize < handle
         end
 
         % ------------------------------------------------------------ unwrap
-        function unwrapped = unwrapGoldstein(obj, wrapped)
+        function unwrapped = unwrapGoldstein(obj, wrapped, maxBox)
+            % unwrapGoldstein(wrapped)        - default search box (9)
+            % unwrapGoldstein(wrapped, maxBox)- override Goldstein box cap
+            %
+            % maxBox is the dominant performance knob. Smaller values
+            % (e.g. 5-9) are dramatically faster; larger values may resolve
+            % more residue pairs at significant runtime cost. Pass 0 or omit
+            % to use the built-in default.
             obj.checkMatrix(wrapped, 'wrapped');
             wrapped = double(wrapped);
             [rows, cols] = size(wrapped);
+            if nargin < 3 || isempty(maxBox)
+                maxBox = 0;
+            end
 
             unwrapped = zeros(rows, cols);
             [status, ~, unwrapped] = calllib(obj.LIB_NAME, ...
-                'phase_unwrap_goldstein', wrapped, unwrapped, ...
-                int32(rows), int32(cols));
-            obj.checkStatus(status, 'phase_unwrap_goldstein');
+                'phase_unwrap_goldstein_ex', wrapped, unwrapped, ...
+                int32(rows), int32(cols), int32(maxBox));
+            obj.checkStatus(status, 'phase_unwrap_goldstein_ex');
         end
 
         % ----------------------------------------------------------- sincos

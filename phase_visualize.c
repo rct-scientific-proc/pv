@@ -158,8 +158,17 @@ static void place_branch_cuts(int8_t *residues, uint8_t *cut,
     free(active);
 }
 
-int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
-                           int32_t rows, int32_t cols)
+/* Default Goldstein search-box cap.
+ *
+ * Goldstein's original paper and Ghiglia & Pritt's textbook both recommend a
+ * small fixed cap (typically ~9). Allowing the box to grow to half the image
+ * makes the worst-case search O(N^4) and dominates runtime for any image of
+ * non-trivial size, with little quality benefit on typical interferograms.
+ */
+#define PV_GOLDSTEIN_DEFAULT_MAX_BOX 9
+
+int phase_unwrap_goldstein_ex(const double *wrapped_phase, double *unwrapped_phase,
+                              int32_t rows, int32_t cols, int32_t max_box)
 {
     /* ---- Validate inputs ---- */
     if (wrapped_phase == NULL || unwrapped_phase == NULL) {
@@ -215,10 +224,14 @@ int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
 
     /* ---- Stage 2: place branch cuts (Goldstein box-growing) ---- */
     {
-        int32_t max_box = (rows < cols ? rows : cols) / 2;
-        if (max_box < 3)  max_box = 3;
-        if ((max_box & 1) == 0) max_box += 1; /* must be odd */
-        place_branch_cuts(residues, cut, rows, cols, max_box);
+        /* max_box <= 0 selects the default; otherwise the caller's value is
+         * clamped to [3, min(rows,cols)] and forced to an odd integer. */
+        int32_t mb = (max_box <= 0) ? PV_GOLDSTEIN_DEFAULT_MAX_BOX : max_box;
+        const int32_t mb_cap = (rows < cols ? rows : cols);
+        if (mb < 3) mb = 3;
+        if (mb > mb_cap) mb = mb_cap;
+        if ((mb & 1) == 0) mb += 1; /* must be odd */
+        place_branch_cuts(residues, cut, rows, cols, mb);
     }
 
     /* ---- Stage 3: flood-fill integration ---- */
@@ -311,6 +324,14 @@ int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
     free(visited);
     free(queue);
     return 0;
+}
+
+/* Backwards-compatible wrapper: uses the default max_box. */
+int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase,
+                           int32_t rows, int32_t cols)
+{
+    return phase_unwrap_goldstein_ex(wrapped_phase, unwrapped_phase,
+                                     rows, cols, 0);
 }
 
 

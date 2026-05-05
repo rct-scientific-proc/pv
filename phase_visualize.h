@@ -51,6 +51,19 @@ extern "C" {
 //   -3 : memory allocation failure
 PV_API int phase_unwrap_goldstein(const double *wrapped_phase, double *unwrapped_phase, int32_t rows, int32_t cols);
 
+// Same as phase_unwrap_goldstein, but exposes the maximum branch-cut search
+// box size (Goldstein "box growing" cap). This is the dominant performance
+// knob: search cost grows with max_box^2 per residue.
+//
+//   max_box <= 0 : use the built-in default (9, per Ghiglia & Pritt).
+//   otherwise    : value is clamped to [3, min(rows,cols)] and forced odd.
+//
+// Smaller values (e.g. 5-9) are dramatically faster and usually adequate
+// for noisy interferograms. Larger values can resolve more residue pairs at
+// significant runtime cost.
+PV_API int phase_unwrap_goldstein_ex(const double *wrapped_phase, double *unwrapped_phase,
+                                     int32_t rows, int32_t cols, int32_t max_box);
+
 
 // 2. Sine/cosine decomposition.
 // Splits a wrapped phase image into its in-phase (cosine) and quadrature
